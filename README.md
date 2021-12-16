@@ -2,21 +2,26 @@
 
 Based on https://beej.us/guide/bgnet/html/
 
-This stuff was made in a hurry ;)
+This stuff was made in a hurry for a very simple use case (centralized logging over TCP).
 
-* one server
-* multiple clients
-* clients send lines of strings only
+- one server (receive only)
+- multiple clients (send only)
+- data transmitted are only strings
 
 
 ### Build
 
 ```
+git clone https://github.com/rayburgemeestre/beej-plus-plus beej++
+pushd beej++
 make
+sudo make install
 ```
 
 
 ### Server
+
+Start server on port `10000`.
 
 ```
 #include "beej.h"
@@ -33,6 +38,10 @@ int main() {
 ```
 
 ### Client
+
+Connect to server on `localhost` port `10000`.
+
+Then send a bunch of text..
 
 ```
 #include "beej.h"
