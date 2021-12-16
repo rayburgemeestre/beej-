@@ -1,7 +1,5 @@
 #include "beej.h"
 
-#define PORT "10000"
-
 namespace {
 // Get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa) {
@@ -13,7 +11,7 @@ void *get_in_addr(struct sockaddr *sa) {
 }
 
 // Return a listening socket
-int get_listener_socket(void) {
+int get_listener_socket(int port) {
   int listener;  // Listening socket descriptor
   int yes = 1;   // For setsockopt() SO_REUSEADDR, below
   int rv;
@@ -25,7 +23,7 @@ int get_listener_socket(void) {
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_flags = AI_PASSIVE;
-  if ((rv = getaddrinfo(NULL, PORT, &hints, &ai)) != 0) {
+  if ((rv = getaddrinfo(NULL, std::to_string(port).c_str(), &hints, &ai)) != 0) {
     fprintf(stderr, "selectserver: %s\n", gai_strerror(rv));
     exit(1);
   }
@@ -114,7 +112,7 @@ void server::run() {
   pfds = (struct pollfd *)malloc(sizeof *pfds * fd_size);
 
   // Set up and get a listening socket
-  listener = get_listener_socket();
+  listener = get_listener_socket(port);
 
   if (listener == -1) {
     fprintf(stderr, "error getting listening socket\n");

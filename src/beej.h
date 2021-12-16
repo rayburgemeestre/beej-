@@ -22,10 +22,10 @@ namespace beej {
 
 class server {
 public:
-  server(int port);
+  explicit server(int port);
 
-  void run();
-  void on_line(std::function<void(const std::string& line)> callback);
+  __attribute__((noreturn)) void run();
+  void on_line(std::function<void(const std::string&)> callback);
 
 private:
   int port;
@@ -39,7 +39,7 @@ private:
   int fd_size = 5;
   struct pollfd* pfds;
   std::map<int, socketbuffer> buffers;
-  std::function<void(const std::string& line)> callback = [](const std::string& line) {};
+  std::function<void(const std::string& line)> callback = [](const std::string&) {};
 };
 
 class client {
@@ -53,8 +53,7 @@ public:
 private:
   std::string hostname;
   int port;
-  int sockfd, numbytes;
-  char buf[MAXDATASIZE];
+  int sockfd;
   struct addrinfo hints, *servinfo, *p;
   int rv;
   char s[INET6_ADDRSTRLEN];
