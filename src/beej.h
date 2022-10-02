@@ -25,7 +25,7 @@ public:
   explicit server(int port);
 
   __attribute__((noreturn)) void run();
-  void on_line(std::function<void(const std::string&)> callback);
+  void on_line(std::function<std::pair<bool,std::string>(const std::string&)> callback);
 
 private:
   int port;
@@ -39,7 +39,9 @@ private:
   int fd_size = 5;
   struct pollfd* pfds;
   std::map<int, socketbuffer> buffers;
-  std::function<void(const std::string& line)> callback = [](const std::string&) {};
+  std::function<std::pair<bool, std::string>(const std::string& line)> callback = [](const std::string&) -> std::pair<bool, std::string> {
+    return {false, ""};
+  };
 };
 
 class client {
@@ -49,6 +51,7 @@ public:
   void connect();
   void disconnect();
   void send(const std::string& data);
+  void read(std::function<void(const std::string&)> callback);
 
 private:
   std::string hostname;
@@ -57,6 +60,8 @@ private:
   struct addrinfo hints, *servinfo, *p;
   int rv;
   char s[INET6_ADDRSTRLEN];
+  char buf[256];
+  socketbuffer buffer;
 };
 
 }  // namespace beej

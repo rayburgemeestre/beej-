@@ -1,5 +1,8 @@
 #include "beej.h"
 
+#include <sstream>
+#include <iostream>
+
 namespace {
 // Get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa) {
@@ -171,7 +174,18 @@ void server::run() {
           } else {
             buffers[sender_fd].append(buf, nbytes);
             while (buffers[sender_fd].has_line()) {
-              callback(buffers[sender_fd].get_line());
+              auto p = callback(buffers[sender_fd].get_line());
+              bool disconnect = p.first;
+              std::string s = p.second;
+              std::stringstream ss(s);
+              std::string line;
+              while (std::getline(ss, line, '\n')) {
+                  line = line + "\r\n";
+                  int len = line.size();
+                  // std::cout << "Sending back: " << line << std::endl;
+                  sendall(sender_fd, (char *)line.c_str(), &len);
+              }
+              if (disconnect) close(sender_fd);
             }
           }
         }
@@ -180,7 +194,7 @@ void server::run() {
   }
 }
 
-void server::on_line(std::function<void(const std::string &line)> callback) {
+void server::on_line(std::function<std::pair<bool,std::string>(const std::string &line)> callback) {
   this->callback = callback;
 }
 
@@ -234,4 +248,26 @@ void client::send(const std::string &data) {
   int len = data.size();
   sendall(sockfd, (char *)data.c_str(), &len);
 }
+
+void client::read(std::function<void(const std::string&)> callback) {
+    while (true) {
+        int nbytes = recv(sockfd, buf, sizeof buf, 0);
+        if (nbytes <= 0) {
+            if (nbytes != 0) {
+                // perror("recv");
+            }
+            disconnect();
+            return;
+        } else {
+            buffer.append(buf, nbytes);
+            std::string line;
+            while (buffer.has_line()) {
+                line = buffer.get_line();
+                line.erase(line.find_last_not_of(" \n\r\t") + 1);
+                if (!line.empty()) callback(line);
+            }
+        }
+    }
+}
+
 }  // namespace beej
